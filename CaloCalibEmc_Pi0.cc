@@ -185,7 +185,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
   {
     RawCluster *t_recalcluster = t_rclusiter->second;
 
-   // float cluse = t_recalcluster->get_energy();
+   // float cluse = t_recalcluster->get_energy(); // get_ecore() is better (same below also)
     float cluse = t_recalcluster->get_ecore();
     if (cluse > 0.1) inCs++;
 
@@ -201,6 +201,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
   	
 	// looping on the saved clusters savCs[]
 	// outer loop (we want to do pair of the loops)
+	// also, we save cluster info. from outer cluster
 	for( int jCs=0; jCs<iCs; jCs++) 
 	  {      
 
@@ -459,6 +460,8 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
       // pz  =  pt * sinh(eta);
       //      pt *= myaggcorr[
       aggcv = myaggcorr[_maxTowerEtas[j]][_maxTowerPhis[j]];
+			
+			std::cout << "aggcv applied: " << aggcv << std::endl;
 
 
 //	// why we need to do this every iterations?
@@ -572,6 +575,9 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi(const char * incorrFile)
 			}
   }
 
+	
+
+
   std::string inF = incorrFile;
   if (!(inF == ""))
   {
@@ -622,7 +628,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi(const char * incorrFile)
 	double cemc_par1_values[96][256] = {0.0};
 	//double cemc_par0_values[96][256] = {0.0};
 	//double cemc_par0_errors[96][256] = {0.0};
-	//double cemc_par1_errors[96][256] = {0.0};
+	double cemc_par1_errors[96][256] = {0.0};
 	//double cemc_par2_values[96][256] = {0.0};
 	//double cemc_par2_errors[96][256] = {0.0};
 
@@ -712,7 +718,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi(const char * incorrFile)
 				//		cemc_par1_values[ieta][iphi] = 0.5;
 				//	}
 					//cemc_par0_values[ieta][iphi]	= cemc_eta_phi_result->GetParameter(0);
-					//cemc_par1_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(1);
+					cemc_par1_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(1);
 					//cemc_par2_values[ieta][iphi]  = cemc_eta_phi_result->GetParameter(2);
 					//cemc_par2_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(2);
 				}
@@ -721,8 +727,16 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi(const char * incorrFile)
 					std::cout << "Warning::Fit Failed for eta bin : " << ieta << iphi << std::endl;
 				}
 
-			
-				nt_corrVals->Fill(ieta,iphi,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
+				for (int ipatt_eta=0; ipatt_eta<6; ipatt_eta++)
+				{
+					for (int ipatt_phi=0; ipatt_phi<16; ipatt_phi++)
+					{
+						//if ((ipatt_eta>0) || (ipatt_phi>0))
+						//{
+							nt_corrVals->Fill(ieta+ipatt_eta*16,iphi+ipatt_phi*16,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
+						//}
+					}
+				}
 
 				//nt_corrVals->Fill(ieta,259,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][259]);
 				 
@@ -731,12 +745,12 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi(const char * incorrFile)
 
 				//fitp0_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par0_values[ieta][iphi]);
 				fitp1_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par1_values[ieta][iphi]);
+				fitp1_eta_phi2d->SetBinError(ieta+1,iphi+1,cemc_par1_errors[ieta][iphi]);
+
 			}
 		}
 		//}
 		
-
-
 
 /*
   TGraphErrors g1(96, eta_value, eta_par1_value, 0, eta_par1_error);
