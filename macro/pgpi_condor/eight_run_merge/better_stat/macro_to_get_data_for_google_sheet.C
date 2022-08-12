@@ -1,6 +1,6 @@
 #include <calib_emc_pi0/CaloCalibEmc_Pi0.h>
 
-void macro(const char * ifile="", int h=0)
+void macro_to_get_data_for_google_sheet(const char * ifile="", int h=0)
 {
 	R__LOAD_LIBRARY(libcalibCaloEmc_pi0.so)
 
