@@ -16,3 +16,5 @@
 *.exe
 *.out
 *.app
+
+.CaloCalibEmc_Pi0*
