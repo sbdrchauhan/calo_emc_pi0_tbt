@@ -18,3 +18,16 @@
 *.app
 
 .CaloCalibEmc_Pi0*
+
+b/
+macro/
+config*
+*.am
+*.in
+*.sh
+install*
+missing
+aclocal*
+depcomp
+
+autom4te.cache/
