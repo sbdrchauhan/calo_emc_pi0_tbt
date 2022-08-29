@@ -4,6 +4,14 @@
 
 # sPHENIX Electromagnetic Calorimeter Calibration
 
+## Table of Content
+
+- [Description](#description)
+- [Analysis Codes](#analysis-codes)
+- [Macros](#macros)
+- [Presentation](#presentation)
+
+
 ## Description
 
 [sPHENIX](https://www.sphenix.bnl.gov/) is an experiment, a collaboration in the RHIC collider located at Brookhaven National Laboratory facility in Long Island, New York. sPHENIX is primarily dedicated to studying a dense matter which is formed when two particle beams of heavy-ions collide at ultra-relativistic speeds. The dense matter created during a collision is called "Quark-Gluon Plasma". This state of matter is supposed to be formed during the early universe. In nutshell, to understand the interactions of the matter at the fundamental levels is the primary goal of sPHENIX.
@@ -14,33 +22,37 @@ Calibration of EMCal is done using several techniques and methods, one such meth
 
 To complete the calibration, we require about 6-7 iterations, and each iteration takes about 4 hours to complete. For complete documentation on how we do pi0 method calibration, please refer [here](https://www.overleaf.com/read/yxsdjvgjsbfp).
 
+## Analysis Codes
+
+Codes are written in C++ and [ROOT](https://root.cern/) (usually, used by high-energy physics group) language. A class is created which contains the methods to perform analysis on the data.
+
+Codes:
+
+* [CaloCalibEmc_Pi0.cc](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/CaloCalibEmc_Pi0.cc) class implementaion
+* [CaloCalibEmc_Pi0.h](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/CaloCalibEmc_Pi0.h) class declaration
+
+## Macros
+
+Macros are also a C++ program that runs above class using the methods of the same class to perform specific operations.
+
+macros:
+
+* [Loop macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/runLCELoop.C)
+* [Saving correction values macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/save_correc_value.C)
+
+## Presentation
+
+I presented my initial results in one of the collaboration iternal meetings describing how my analysis codes are working as expected.
+
+slide:
+
+* [July2022 Presetation](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf)
+
+
+
+
+
 >**P.S.** The codes located here is just a small part of a giant framework of codes behind the [sPHENIX official github page](https://github.com/sPHENIX-Collaboration), which contains all the codes required for all other detectors subsystems to correctly record data which are further analyzed for any physics related work.
 
 
-## Table of Content
-
-- [Method](#method)
-- [Process](#process)
-- [Results](#results)
-- [Conclusions](#conclusions)
-
-
-
-
-
-
-
-
-
-
-## Method
-
-
-## Process
-
-
-## Results
-
-
-## Conclusions
 
