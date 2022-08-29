@@ -48,6 +48,10 @@ slide:
 
 * [July2022 Presetation](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf)
 
+## Results
+With the calibration codes almost completed, the result here shows how the initial decalibration of the small part of EMCal (16x16 parts of total 96x256 parts) can be corrected. In the iteration 0, EMCal readings are not closer to the pi0 truth value of 0.135, with the gradual itertions and applying corrections each time, the EMCal readings comes closer to the pi0 truth values.
+
+![Pi0 pattern image](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/images/pi0_patternv14.png)
 
 
 
