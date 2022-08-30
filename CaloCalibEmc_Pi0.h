@@ -43,7 +43,9 @@ class CaloCalibEmc_Pi0 : public SubsysReco
 
   void Fit_Histos(const char * infilent = "");
 
-	void Fit_Histos_Eta_Phi(const char *infilent="");
+	void Fit_Histos_Eta_Phi_Add96(const char *infilent="");
+
+	void Fit_Histos_Eta_Phi_Add32(const char *infilent="");
 
   void Get_Histos(const char * infile, const char * outfile);
 
