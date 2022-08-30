@@ -191,7 +191,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
 
     if (cluse > 1.0)
 		{	
-			 savCs[iCs++] = t_recalcluster;
+			savCs[iCs++] = t_recalcluster;
 		}
   }
 
@@ -622,8 +622,6 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add96(const char * incorrFile)
 
 				if (ieta>15 || iphi>15) continue;				
 
-
-
 				//for(int ithirds=0; ithirds<3; ithirds++)
 				//{
 				//for (int ieta=0+ithirds*32; ieta<(ithirds*32+16); ieta++)
@@ -751,8 +749,6 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add96(const char * incorrFile)
 }
 
 
-
-
 // _______________________________________________________________..
 void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add32(const char * incorrFile)
 {
@@ -770,7 +766,6 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add32(const char * incorrFile)
   std::string inF = incorrFile;
   if (!(inF == ""))
   {
-
     TFile * infileNt = new TFile(incorrFile);
       
     float myieta;
@@ -913,7 +908,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add32(const char * incorrFile)
 					{
 						//if ((ipatt_eta>0) || (ipatt_phi>0))
 						//{
-							nt_corrVals->Fill(ieta+ipatt_eta*16,iphi+ipatt_phi*16,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
+						nt_corrVals->Fill(ieta+ipatt_eta*16,iphi+ipatt_phi*16,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
 						//}
 					}
 				}
