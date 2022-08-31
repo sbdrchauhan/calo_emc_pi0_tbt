@@ -348,7 +348,6 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 		}
   }
 
-
   std::cout << "running w/ corr file? : " << incorrFile << std::endl;  
 
   std::string inF = incorrFile;
@@ -392,10 +391,10 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 
   TTree * t1 = intree;
   if (!intree)
-    {
-      TFile *f = new TFile(_filename);
-      t1 = (TTree *) f->Get("_eventTree");
-    }
+  {
+		TFile *f = new TFile(_filename);
+    t1 = (TTree *) f->Get("_eventTree");
+  }
   
 
   // Set Branches
@@ -416,8 +415,6 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
   //  int nEntries = (int) t1->GetEntriesFast();
   int nEntries = (int) t1->GetEntries();
   int nevts2 = nevts;
-
-  std::cout << "nevts total in ttree " << nEntries << std::endl;
 
   if (nevts < 0 || nEntries < nevts)
     nevts2 = nEntries;
@@ -447,11 +444,10 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
       // px  =  pt * cos(phi);
       // py  =  pt * sin(phi);
       // pz  =  pt * sinh(eta);
-      //      pt *= myaggcorr[
+      // pt *= myaggcorr[
       aggcv = myaggcorr[_maxTowerEtas[j]][_maxTowerPhis[j]];
 			
-			std::cout << "aggcv applied: " << aggcv << std::endl;
-
+			//std::cout << "aggcv applied: " << aggcv << std::endl;
 
 			// This is Dr. Frantz, input decalibrations (previously)
 			// why we need to do this every iterations?
@@ -462,6 +458,8 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 			//  int pjj = _maxTowerEtas[j]%4 - 1;      
 			//      aggcv *= 0.86+jket*0.11 + 0.02*pjj;
 			
+			// comment lines below this to remove decalibration shift
+			/*
 			int ij_eta = _maxTowerEtas[j];
 			int jj_phi = _maxTowerPhis[j];
 
@@ -488,7 +486,9 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 			}
 			
 			aggcv *= ee;
-
+			
+			*/
+			// comment above this line to remove decalibration shifts
 
       pt *= aggcv;
       E *= aggcv;
@@ -505,7 +505,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
     {
       pho1 = savClusLV[jCs];
       
-      if (fabs(pho1->Pt()) < 1.1)	// was 1.55 originally
+      if (fabs(pho1->Pt()) < 1.7)	// 1.1 best from previous studies
 				continue;
 			
       // another loop to go into the saved cluster
@@ -516,18 +516,18 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
         pho2 = savClusLV[kCs];
 
 	
-				if (fabs(pho2->Pt()) < 1.0) continue; // was 1.08
+				if (fabs(pho2->Pt()) < 1.0) continue; // don't really need to change this
 	
 				alphaCut = fabs((pho1->E() - pho2->E())/(pho1->E()+ pho2->E()));
 
-				if (alphaCut > 0.50) continue; // was 0.64 
+				if (alphaCut > 0.50) continue; // 0.50 to begin with
 	
 				TLorentzVector pi0lv;
 
         if (pho1->DeltaR(*pho2) > 0.45) continue;
 
         pi0lv = *pho1 + *pho2;
-				if (pho1->E()  > 1.1 && pho2->E() > 1.0 && fabs(pi0lv.Pt()) > 1.1) // was pi0lv.Pt() > 1.8
+				if (pho1->E()  > 1.7 && pho2->E() > 1.0 && fabs(pi0lv.Pt()) > 1.7) // pi0lv.Pt() > 1.1 best from previous studies
 	  		{
 
 					float pairInvMass = pi0lv.M();
@@ -540,6 +540,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
       }
     }
   }
+	std::cout << "total number of events: " << nEntries << endl;
 }
 
 
@@ -930,7 +931,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add32(const char * incorrFile)
 
 
 // _______________________________________________________________..
-void CaloCalibEmc_Pi0::Fit_Histos(const char * incorrFile)
+void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
 {
   float myaggcorr[96][260];
   for (int cci = 0; cci < 96; cci++)
@@ -1133,8 +1134,6 @@ void CaloCalibEmc_Pi0::Get_Histos(const char* infile, const char * outfile)
 	  	TString hist_name = "emc_ieta" + i1 + "_phi"+ j1;
 	  	TH1F *h_eta_phi_temp = (TH1F *)cal_output->Get(hist_name.Data());
 	  	cemc_hist_eta_phi[i][j] = h_eta_phi_temp;
-
-			std::cout << "got " << hist_name.Data() << std::endl;
 	  }	
   }
   std::cout <<  "finished Loading histos" << std::endl;
