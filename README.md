@@ -9,7 +9,7 @@
 - [Description](#description)
 - [Analysis Codes](#analysis-codes)
 - [Macros](#macros)
-- [Presentation](#presentation)
+- [Presentations](#presentations)
 - [Results](#results)
 
 
@@ -51,12 +51,37 @@ slides:
 * [September 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/UPDATED_optimal%20photon%20cuts_v2_UPDATED_AFTER_PRESENTATION.pdf)
 
 ## Results
-With the calibration codes almost completed, the result here shows how the initial decalibration of the small part of EMCal (16x16 parts of total 96x256 parts) can be corrected. In the iteration 0, EMCal readings are not closer to the pi0 truth value of 0.135, with the gradual itertions and applying corrections each time, the EMCal readings comes closer to the pi0 truth values.
+
+<hr>
+<hr>
+
+### Calibrating the EMCal (small section) towers
+
+<hr>
+
+With the calibration codes almost completed, the first result here shows how the initial decalibration of the small part of EMCal (16x16 parts of total 96x256 parts) can be corrected. In the iteration 0, EMCal readings are not closer to the pi0 truth value of 0.135, with the gradual itertions and applying corrections each time, the EMCal readings comes closer to the pi0 truth values. Details see [presentation](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf) first part.
 
 ![Pi0 pattern image](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/images/pi0_patternv14.png)
 
+<hr>
+<hr>
 
+### $\pi^0$ Photon Cuts:
 
+<hr>
+
+This next study aims to find the optimal $\pi^0$ photon's $p_T$ cut, which helps to stay in the best trade-off between the relative error and the background noise need to include for the analysis. Although the minimum shown here would be the best spot to choose if we want to lower our relative error during the analysis later with collected data, we can see that the relative error is not decreasing by any significant amount for us to go there and in return get lots of background noise. So, better would be to stay within $10-15\%$ of the minimum. Details in the [presentation slides](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/UPDATED_optimal%20photon%20cuts_v2_UPDATED_AFTER_PRESENTATION.pdf).
+
+<p align="center">
+<img src="https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/images/estimator%20of%20eta%2094.png">
+</p>
+
+<hr>
+<hr>
+
+<br/>
+<br/>
+<br/>
 
 >**P.S.** The codes located here is just a small part of a giant framework of codes behind the [sPHENIX official github page](https://github.com/sPHENIX-Collaboration), which contains all the codes required for all other detectors subsystems to correctly record data which are further analyzed for any physics related work.
 
