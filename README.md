@@ -41,13 +41,14 @@ macros:
 * [Loop macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/runLCELoop.C)
 * [Saving correction values macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/save_correc_value.C)
 
-## Presentation
+## Presentations
 
-I presented my initial results in one of the collaboration iternal meetings describing how my analysis codes are working as expected.
+I presented my initial results in one of the collaboration internal meetings describing how my analysis codes are working as expected.
 
-slide:
+slides:
 
-* [July2022 Presetation](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf)
+* [August 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf)
+* [September 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/UPDATED_optimal%20photon%20cuts_v2_UPDATED_AFTER_PRESENTATION.pdf)
 
 ## Results
 With the calibration codes almost completed, the result here shows how the initial decalibration of the small part of EMCal (16x16 parts of total 96x256 parts) can be corrected. In the iteration 0, EMCal readings are not closer to the pi0 truth value of 0.135, with the gradual itertions and applying corrections each time, the EMCal readings comes closer to the pi0 truth values.
