@@ -196,7 +196,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
   }
 
   _nClusters = iCs;
-  if (_nClusters > 60)
+  if (_nClusters > 60 && _nClusters < 1)
     return Fun4AllReturnCodes::EVENT_OK;
   	
 	// looping on the saved clusters savCs[]
@@ -418,6 +418,9 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 
   if (nevts < 0 || nEntries < nevts)
     nevts2 = nEntries;
+	
+	// keeping track of discarded clusters for v7
+	int discarded_clusters = 0;
 
   for (int i = 0; i < nevts2; i++)
   {
@@ -431,7 +434,11 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
  
     int nClusters = _nClusters;
 
-    if (nClusters > 60) continue;
+    if (nClusters > 60)
+		{
+			discarded_clusters += 1;
+			continue;
+		}
 
     for (int j = 0; j < nClusters; j++)
     {
@@ -505,7 +512,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
     {
       pho1 = savClusLV[jCs];
       
-      if (fabs(pho1->Pt()) < 1.7)	// 1.1 best from previous studies
+      if (fabs(pho1->Pt()) < 1.65)	// 1.1 best from previous studies
 				continue;
 			
       // another loop to go into the saved cluster
@@ -527,7 +534,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
         if (pho1->DeltaR(*pho2) > 0.45) continue;
 
         pi0lv = *pho1 + *pho2;
-				if (pho1->E()  > 1.7 && pho2->E() > 1.0 && fabs(pi0lv.Pt()) > 1.7) // pi0lv.Pt() > 1.1 best from previous studies
+				if (pho1->E()  > 1.65 && pho2->E() > 1.0 && fabs(pi0lv.Pt()) > 1.65) // pi0lv.Pt() > 1.1 best from previous studies
 	  		{
 
 					float pairInvMass = pi0lv.M();
@@ -540,7 +547,8 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
       }
     }
   }
-	std::cout << "total number of events: " << nEntries << endl;
+	std::cout << "total number of events: " << nEntries << std::endl;
+	std::cout << "total number of clusters discarded: " << discarded_clusters << std::endl; 
 }
 
 
