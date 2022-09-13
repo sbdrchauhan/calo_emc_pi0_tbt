@@ -49,6 +49,7 @@ slides:
 
 * [August 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/pi0_tbt_photon_cut_presentation.pdf)
 * [September 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/UPDATED_optimal%20photon%20cuts_v2_UPDATED_AFTER_PRESENTATION.pdf)
+* [September 13, 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/optimal%20cut%20update%203_shyam_chauhan_sphenix_caloCalibMtg.pdf)
 
 ## Results
 
