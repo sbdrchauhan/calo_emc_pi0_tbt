@@ -24,10 +24,10 @@
 
 #include <litecaloeval/LiteCaloEval.h>
 
+
 #include <phool/PHRandomSeed.h>
 #include <phool/recoConsts.h>
 
-#include <litecaloeval/LiteCaloEval.h>
 #include <calib_emc_pi0/CaloCalibEmc_Pi0.h>
 
 R__LOAD_LIBRARY(libfun4all.so)
@@ -35,53 +35,40 @@ R__LOAD_LIBRARY(libcaloCalibDBFile.so)
 R__LOAD_LIBRARY(libcalibCaloEmc_pi0.so)
 R__LOAD_LIBRARY(libLiteCaloEvalTowSlope.so)
 
+
 // For HepMC Hijing
 // try inputFile = /sphenix/sim/sim01/sphnxpro/sHijing_HepMC/sHijing_0-12fm.dat
 
 int Fun4All_pi0_SimpleGun_sPHENIX(
     const int nEvents = 10,
-    //    const string &inputFile0 = "DST_CALO_G4HIT_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-10000.root",
-    // const string &inputFile1 = "DST_VERTEX_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-10000.root",
     const int mdc2_4_file_num = 1,
     const string &outputFile = "newoutput1_calo1",
-    //      const string &inputFile0 = "/gpfs/mnt/gpfs02/sphenix/sim/sim01/sphnxpro/MDC2/sHijing_HepMC/fm_0_20/pileup/DST_CALO_G4HIT_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000003-00001.root",  //"DST_CALO_G4HIT_sHijing_0_12fm-0000000001-00000.root",
-    //      const string &inputFile1 = "/gpfs/mnt/gpfs02/sphenix/sim/sim01/sphnxpro/MDC2/sHijing_HepMC/fm_0_20/pileup/DST_VERTEX_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000003-00001.root", //"DST_VERTEX_sHijing_0_12fm-0000000001-00000.root",
-    //      const string &outputFile = "G4sPHENIX_calo1",
     const string &outdir = ".")
 {
-  Fun4AllServer *se = Fun4AllServer::instance();
-  se->Verbosity(0);
+   Fun4AllServer *se = Fun4AllServer::instance();
+   se->Verbosity(0);
 
-  //   string inputFile0 = "DST_CALO_G4HIT_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-10000.root";
-  //   string inputFile1 = "DST_VERTEX_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-10000.root";
+   string inputFile0 = "DST_CALO_G4HIT_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-";
+   string inputFile1 = "DST_VERTEX_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-";
 
-  string inputFile0 = "DST_CALO_G4HIT_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-";
-  string inputFile1 = "DST_VERTEX_sHijing_0_20fm_50kHz_bkg_0_20fm-0000000004-";
+   
+   int ynum_int = 100000+ mdc2_4_file_num;
+   TString yn_tstr = "";
+   yn_tstr += ynum_int;
+   yn_tstr.Remove(0,1);
+   inputFile0 += yn_tstr.Data();
+   inputFile1 += yn_tstr.Data();
 
-  int ynum_int = 100000 + mdc2_4_file_num;
-  TString yn_tstr = "";
-  yn_tstr += ynum_int;
-  yn_tstr.Remove(0, 1);
-  inputFile0 += yn_tstr.Data();
-  inputFile1 += yn_tstr.Data();
+   inputFile0 += ".root";
+   inputFile1 += ".root";
+   
+   cout << "running over these files" << endl;
+   cout << inputFile0 << endl;
+   cout << inputFile1 << endl;
 
-  inputFile0 += ".root";
-  inputFile1 += ".root";
-
-  cout << "running over these files" << endl;
-  cout << inputFile0 << endl;
-  cout << inputFile1 << endl;
-
-  // const string &outputFile = "newoutput1_calo1",
-
-  // Opt to print all random seed used for debugging reproducibility. Comment out to reduce stdout prints.
+  //Opt to print all random seed used for debugging reproducibility. Comment out to reduce stdout prints.
   PHRandomSeed::Verbosity(0);
-  /*
-  long mtime = gSystem->Now();
-  TString fileOut = outputFile.c_str();
-  fileOut += (mtime / 100000 - 8542922)/3;
-  string outputFile2 = fileOut.Data();
-  */
+
   string outputFile2 = outputFile.c_str();
   outputFile2 = outputFile2 + ".root";
 
@@ -107,16 +94,16 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   // read previously generated g4-hits files, in this case it opens a DST and skips
   // the simulations step completely. The G4Setup macro is only loaded to get information
   // about the number of layers used for the cell reco code
-  // Input::READHITS = true;
-  INPUTREADHITS::filename[0] = inputFile0;
-  INPUTREADHITS::filename[1] = inputFile1;
+  
+	//Input::READHITS = true;
+  //INPUTREADHITS::filename[0] = inputFile0;
+  //INPUTREADHITS::filename[1] = inputFile1;
 
-  INPUTEMBED::filename[0] = inputFile0;
-  INPUTHEPMC::filename = inputFile1;
+	INPUTEMBED::filename[0] = inputFile0;
+	INPUTEMBED::filename[1] = inputFile1;
+	INPUTHEPMC::filename = inputFile0;
 
-  cout << "Hello there" << endl;
-
-  Input::SIMPLE = true;
+	Input::SIMPLE = true;
   Input::SIMPLE_VERBOSITY = 0;
 
   //-----------------
@@ -125,10 +112,10 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   // This creates the input generator(s)
   InputInit();
 
-  if (Input::SIMPLE)
+	if (Input::SIMPLE)
   {
-    INPUTGENERATOR::SimpleEventGenerator[0]->add_particles("pi0", 2);
-
+    INPUTGENERATOR::SimpleEventGenerator[0]->add_particles("pi0", 10);
+    
     if (Input::HEPMC || Input::EMBED)
     {
       INPUTGENERATOR::SimpleEventGenerator[0]->set_reuse_existing_vertex(true);
@@ -147,7 +134,7 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
     INPUTGENERATOR::SimpleEventGenerator[0]->set_pt_range(0.5, 20.);
   }
 
-  if (Input::HEPMC)
+	if (Input::HEPMC)
   {
     //! apply sPHENIX nominal beam parameter with 2mrad crossing as defined in sPH-TRG-2020-001
     Input::ApplysPHENIXBeamParameter(INPUTMANAGER::HepMCInputManager);
@@ -161,13 +148,11 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
     }
   }
 
-  cout << "Yay" << endl;
-
   // register all input generators with Fun4All
   InputRegister();
 
   // set up production relatedstuff
-  Enable::PRODUCTION = true;
+   Enable::PRODUCTION = true;
 
   //======================
   // Write the DST
@@ -176,12 +161,9 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   Enable::DSTOUT = false;
   Enable::DSTOUT_COMPRESS = false;
   DstOut::OutputDir = outdir;
-  //  DstOut::OutputFile = outputFile;
+	//  DstOut::OutputFile = outputFile;
   DstOut::OutputFile = outputFile2;
-
-  // Option to convert DST to human command readable TTree for quick poke around the outputs
-  //   Enable::DSTREADER = true;
-
+ 
   // turn the display on (default off)
   Enable::DISPLAY = false;
 
@@ -197,7 +179,7 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   Enable::CEMC_CELL = Enable::CEMC && true;
   Enable::CEMC_TOWER = Enable::CEMC_CELL && true;
   Enable::CEMC_CLUSTER = Enable::CEMC_TOWER && true;
-  //  Enable::CEMC_EVAL = Enable::CEMC_CLUSTER && true;
+	//  Enable::CEMC_EVAL = Enable::CEMC_CLUSTER && true;
 
   // Initialize the selected subsystems
   G4Init();
@@ -214,68 +196,48 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   // Detector Division
   //------------------
 
-  if (Enable::BBC || Enable::BBCFAKE)
-    Bbc_Reco();
+  if (Enable::BBC || Enable::BBCFAKE) Bbc_Reco();
 
-  if (Enable::MVTX_CELL)
-    Mvtx_Cells();
-  if (Enable::INTT_CELL)
-    Intt_Cells();
-  if (Enable::TPC_CELL)
-    TPC_Cells();
-  if (Enable::MICROMEGAS_CELL)
-    Micromegas_Cells();
+  if (Enable::MVTX_CELL) Mvtx_Cells();
+  if (Enable::INTT_CELL) Intt_Cells();
+  if (Enable::TPC_CELL) TPC_Cells();
+  if (Enable::MICROMEGAS_CELL) Micromegas_Cells();
 
-  if (Enable::CEMC_CELL)
-    CEMC_Cells();
+  if (Enable::CEMC_CELL) CEMC_Cells();
 
-  if (Enable::HCALIN_CELL)
-    HCALInner_Cells();
+  if (Enable::HCALIN_CELL) HCALInner_Cells();
 
-  if (Enable::HCALOUT_CELL)
-    HCALOuter_Cells();
+  if (Enable::HCALOUT_CELL) HCALOuter_Cells();
 
   //-----------------------------
   // CEMC towering and clustering
   //-----------------------------
 
-  if (Enable::CEMC_TOWER)
-    CEMC_Towers();
-  if (Enable::CEMC_CLUSTER)
-    CEMC_Clusters();
+  if (Enable::CEMC_TOWER) CEMC_Towers();
+  if (Enable::CEMC_CLUSTER) CEMC_Clusters();
 
   //-----------------------------
   // HCAL towering and clustering
   //-----------------------------
 
-  if (Enable::HCALIN_TOWER)
-    HCALInner_Towers();
-  if (Enable::HCALIN_CLUSTER)
-    HCALInner_Clusters();
+  if (Enable::HCALIN_TOWER) HCALInner_Towers();
+  if (Enable::HCALIN_CLUSTER) HCALInner_Clusters();
 
-  if (Enable::HCALOUT_TOWER)
-    HCALOuter_Towers();
-  if (Enable::HCALOUT_CLUSTER)
-    HCALOuter_Clusters();
+  if (Enable::HCALOUT_TOWER) HCALOuter_Towers();
+  if (Enable::HCALOUT_CLUSTER) HCALOuter_Clusters();
 
   // if enabled, do topoClustering early, upstream of any possible jet reconstruction
-  if (Enable::TOPOCLUSTER)
-    TopoClusterReco();
+  if (Enable::TOPOCLUSTER) TopoClusterReco();
 
-  if (Enable::DSTOUT_COMPRESS)
-    ShowerCompress();
+  if (Enable::DSTOUT_COMPRESS) ShowerCompress();
 
   //--------------
   // SVTX tracking
   //--------------
-  if (Enable::MVTX_CLUSTER)
-    Mvtx_Clustering();
-  if (Enable::INTT_CLUSTER)
-    Intt_Clustering();
-  if (Enable::TPC_CLUSTER)
-    TPC_Clustering();
-  if (Enable::MICROMEGAS_CLUSTER)
-    Micromegas_Clustering();
+  if (Enable::MVTX_CLUSTER) Mvtx_Clustering();
+  if (Enable::INTT_CLUSTER) Intt_Clustering();
+  if (Enable::TPC_CLUSTER) TPC_Clustering();
+  if (Enable::MICROMEGAS_CLUSTER) Micromegas_Clustering();
 
   if (Enable::TRACKING_TRACK)
   {
@@ -313,13 +275,10 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   // Jet reco
   //---------
 
-  if (Enable::JETS)
-    Jet_Reco();
-  if (Enable::HIJETS)
-    HIJetReco();
+  if (Enable::JETS) Jet_Reco();
+  if (Enable::HIJETS) HIJetReco();
 
-  if (Enable::PARTICLEFLOW)
-    ParticleFlow();
+  if (Enable::PARTICLEFLOW) ParticleFlow();
 
   //----------------------
   // Simulation evaluation
@@ -362,13 +321,12 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
     out->AddNode("TOWER_CALIB_CEMC");
     out->AddNode("CLUSTER_CEMC");
     out->AddNode("CLUSTER_POS_COR_CEMC");
-    // leave the topo cluster here in case we run this during pass3
+// leave the topo cluster here in case we run this during pass3
     out->AddNode("TOPOCLUSTER_ALLCALO");
     out->AddNode("TOPOCLUSTER_EMCAL");
     out->AddNode("TOPOCLUSTER_HCAL");
     out->AddNode("GlobalVertexMap");
-    if (Enable::DSTOUT_COMPRESS)
-      DstCompress(out);
+    if (Enable::DSTOUT_COMPRESS) DstCompress(out);
     se->registerOutputManager(out);
   }
   //-----------------
@@ -418,11 +376,9 @@ int Fun4All_pi0_SimpleGun_sPHENIX(
   //-----
 
   se->End();
-  //  se->PrintTimer();
-  // se->PrintMemoryTracker();
   std::cout << "All done" << std::endl;
+	delete se;
   gSystem->Exit(0);
-  delete se;
 
   return 0;
 }
