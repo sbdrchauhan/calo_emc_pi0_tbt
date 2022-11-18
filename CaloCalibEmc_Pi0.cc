@@ -65,15 +65,25 @@ int CaloCalibEmc_Pi0::InitRun(PHCompositeNode *topNode)
 
   cal_output = new TFile(_filename.c_str(), "RECREATE");
 
+
+	// Bunch of histos I don't always need them
   pairInvMassTotal = new TH1F("pairInvMassTotal", "Pair Mass Histo", 70, 0.0, 0.7);
   mass_eta = new TH2F("mass_eta", "2d Pair Mass Histo", 70, 0.0, 0.7, 400, -1.5, 1.5);
   mass_eta_phi = new TH3F("mass_eta_phi", "3d Pair Mass Histo", 70, 0.0, 0.7, 150, -1.5, 1.5, 256, -3.142, 3.142);
 	pt1_ptpi0_alpha = new TH3F("pt1_ptpi0_alpha", "first photon pt, pi0 pt, alpha", 40, 0., 4., 40, 0., 4., 20., 0., 4.);
+	
+	e1_hist_wo_alpha = new TH1F("e1_hist_wo_alpha", "E1 distribution w/o alpha cut", 400, 0., 4.);
+	e2_hist_wo_alpha = new TH1F("e2_hist_wo_alpha", "E2 distribution w/o alpha cut", 400, 0., 4.);
+	e1_hist_w_alpha = new TH1F("e1_hist_w_alpha", "E1 distribution w/ alpha cut", 400, 0., 4.);
+	e2_hist_w_alpha = new TH1F("e2_hist_w_alpha", "E2 distribution w/ alpha cut", 400, 0., 4.);
+
 	//cemc_p1_eta_phi = new TH3F("cemc_p1_eta_phi", "cemc p1, eta, phi", 100,0.,2.,16,0,16,16,0,16);
 	//fitp0_eta_phi2d = new TH2F("fitp0_eta_phi2d", "fit p0 eta phi",16,0,16,16,0,16);
-	//fitp1_eta_phi2d = new TH2F("fitp1_eta_phi2d", "fit p1 eta phi",16,0,16,16,0,16);
+	fitp1_eta_phi2d = new TH2F("fitp1_eta_phi2d", "fit p1 eta phi",16,0,16,16,0,16);
+
+
   // histo to record every tower by tower locations
-  for (int i = 0; i < 96; i++)  // eta rows
+	for (int i = 0; i < 96; i++)  // eta rows
   {
     for (int j = 0; j < 258; j++)  // phi columns
     {
@@ -326,7 +336,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
 //____________________________________________________________________________..
 int CaloCalibEmc_Pi0::End(PHCompositeNode *topNode)
 {
-  cal_output->cd();
+  //cal_output->cd();
   //	_eventTree->Write();
   cal_output->Write();
   cal_output->Close();
@@ -465,8 +475,10 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 			//  int pjj = _maxTowerEtas[j]%4 - 1;      
 			//      aggcv *= 0.86+jket*0.11 + 0.02*pjj;
 			
+			
+			
 			// comment lines below this to remove decalibration shift
-			/*
+			
 			int ij_eta = _maxTowerEtas[j];
 			int jj_phi = _maxTowerPhis[j];
 
@@ -494,7 +506,6 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 			
 			aggcv *= ee;
 			
-			*/
 			// comment above this line to remove decalibration shifts
 
       pt *= aggcv;
@@ -512,7 +523,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
     {
       pho1 = savClusLV[jCs];
       
-      if (fabs(pho1->Pt()) < 1.65)	// 1.1 best from previous studies
+      if (fabs(pho1->Pt()) < 1.0)	
 				continue;
 			
       // another loop to go into the saved cluster
@@ -523,20 +534,19 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
         pho2 = savClusLV[kCs];
 
 	
-				if (fabs(pho2->Pt()) < 1.0) continue; // don't really need to change this
+				if (fabs(pho2->Pt()) < 0.6) continue;
 	
 				alphaCut = fabs((pho1->E() - pho2->E())/(pho1->E()+ pho2->E()));
 
-				if (alphaCut > 0.50) continue; // 0.50 to begin with
+				if (alphaCut > 0.50) continue;
 	
 				TLorentzVector pi0lv;
 
         if (pho1->DeltaR(*pho2) > 0.45) continue;
 
         pi0lv = *pho1 + *pho2;
-				if (pho1->E()  > 1.65 && pho2->E() > 1.0 && fabs(pi0lv.Pt()) > 1.65) // pi0lv.Pt() > 1.1 best from previous studies
+				if (pho1->E()  > 1.0 && pho2->E() > 0.6 && fabs(pi0lv.Pt()) > 1.0)
 	  		{
-
 					float pairInvMass = pi0lv.M();
 				
 					// fill the tower by tower histograms with invariant mass
@@ -548,8 +558,182 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
     }
   }
 	std::cout << "total number of events: " << nEntries << std::endl;
-	std::cout << "total number of clusters discarded: " << discarded_clusters << std::endl; 
+	std::cout << "total number of events discarded: " << discarded_clusters << std::endl; 
 }
+
+
+
+//__________oo00oo__________oo00oo_________________
+//This one is for etaslices
+void CaloCalibEmc_Pi0::Loop_new_cuts(int nevts, TString _filename, TTree * intree, const char * incorrFile)
+{
+
+  float myaggcorr[96][260];
+  for (int cci = 0; cci < 96; cci++)
+  {
+		for (int ccj = 0; ccj < 260; ccj++)
+		{
+			myaggcorr[cci][ccj] = 1.00000;
+		}
+  }
+
+  std::cout << "running w/ corr file? : " << incorrFile << std::endl;  
+
+  std::string inF = incorrFile;
+  if (!(inF == ""))
+  {
+		TFile * infileNt = new TFile(incorrFile);
+		std::cout << "loaded incorrFile " << infileNt << std::endl;
+
+		float myieta;
+		float myiphi;
+		float mycorr;
+		float myaggcv;
+		
+		TNtuple * innt_corrVals = (TNtuple *) infileNt->Get("nt_corrVals");
+		
+		innt_corrVals->SetBranchAddress("tower_eta",&myieta);
+		innt_corrVals->SetBranchAddress("tower_phi",&myiphi);
+		innt_corrVals->SetBranchAddress("corr_val",&mycorr);
+		innt_corrVals->SetBranchAddress("agg_cv",&myaggcv);
+
+		int ntCorrs = innt_corrVals->GetEntries();
+
+		for (int ij = 0; ij < ntCorrs; ij++)
+		{
+			innt_corrVals->GetEntry(ij);
+			int ci = (int) myieta;
+			int cj = (int) myiphi;
+			myaggcorr[ci][cj] = myaggcv;
+			if (ij > ntCorrs -2)
+				std::cout << "loaded corrs eta,phi,aggcv " << myieta 
+				<< " " << myiphi << " " << myaggcv << std::endl; 
+	
+		}
+
+		infileNt->Close();
+		delete infileNt;
+
+  }
+
+  std::cout << "in loop" << std::endl;
+
+  TTree * t1 = intree;
+  if (!intree)
+  {
+		TFile *f = new TFile(_filename);
+    t1 = (TTree *) f->Get("_eventTree");
+  }
+  
+
+  // Set Branches
+  //  t1->SetBranchAddress("_eventNumber", &_eventNumber);
+  t1->SetBranchAddress("_nClusters", &_nClusters);
+  //  t1->SetBranchAddress("_clusterIDs", _clusterIDs);
+  t1->SetBranchAddress("_clusterEnergies", _clusterEnergies);
+  t1->SetBranchAddress("_clusterPts", _clusterPts);
+  t1->SetBranchAddress("_clusterEtas", _clusterEtas);
+  t1->SetBranchAddress("_clusterPhis", _clusterPhis);
+  t1->SetBranchAddress("_maxTowerEtas", _maxTowerEtas);
+  t1->SetBranchAddress("_maxTowerPhis", _maxTowerPhis);
+
+  // pre-loop to save all the clusters LorentzVector
+
+  TLorentzVector *savClusLV[10000];
+
+  //  int nEntries = (int) t1->GetEntriesFast();
+  int nEntries = (int) t1->GetEntries();
+  int nevts2 = nevts;
+
+  if (nevts < 0 || nEntries < nevts)
+    nevts2 = nEntries;
+	
+
+  for (int i = 0; i < nevts2; i++)
+  {
+    // load the ith instance of the TTree
+    t1->GetEntry(i);
+
+    if ((i % 10 == 0 && i < 200) || (i%100 == 0 && i < 1000)
+				|| (i% 1000 == 0 &&  i < 37003)  || i%10000 == 0 )
+      std::cout << "evt no " << i << std::endl;
+    // calibration correction will be applied here
+ 
+    int nClusters = _nClusters;
+
+    if (nClusters > 60)	continue;
+
+    for (int j = 0; j < nClusters; j++)
+    {
+      // float px, py, pz;
+      float pt, eta, phi, E, aggcv;
+      pt = _clusterPts[j];
+      eta = _clusterEtas[j];
+      phi = _clusterPhis[j];
+      E = _clusterEnergies[j];
+      aggcv = myaggcorr[_maxTowerEtas[j]][_maxTowerPhis[j]];
+
+      pt *= aggcv;
+      E *= aggcv;
+
+      savClusLV[j] = new TLorentzVector();
+      savClusLV[j]->SetPtEtaPhiE(pt, eta, phi, E);
+    }
+
+
+    TLorentzVector *pho1, *pho2;
+    int iCs = nClusters;
+    for (int jCs = 0; jCs < iCs; jCs++)
+    {
+      pho1 = savClusLV[jCs];
+      
+      if (fabs(pho1->Pt()) < 0.9)	continue;
+			
+      // another loop to go into the saved cluster
+      for (int kCs = 0; kCs < iCs; kCs++)
+      {
+        if (jCs == kCs) continue;
+
+        pho2 = savClusLV[kCs];
+
+				if (fabs(pho2->Pt()) < 0.6) continue; 
+					
+				TLorentzVector pi0lv;
+        if (pho1->DeltaR(*pho2) > 0.45) continue;
+        pi0lv = *pho1 + *pho2;
+				float pairInvMass = pi0lv.M();
+				if (pi0lv.Pt()<0.9) continue;
+
+				/*
+				if (_maxTowerEtas[jCs]==50 && ((pi0lv.M()>=0.015 && pi0lv.M()<=0.095) || (pi0lv.M()>=0.175 && pi0lv.M()<=0.255)))
+				{
+					e1_hist_wo_alpha->Fill(pho1->E());
+					e2_hist_wo_alpha->Fill(pho2->E());
+				}
+				*/
+	
+				alphaCut = fabs((pho1->E() - pho2->E())/(pho1->E()+ pho2->E()));
+				if (alphaCut > 0.50) continue; // 0.50 to begin with
+
+				/*
+				if  (_maxTowerEtas[jCs]==50 && ((pi0lv.M()>=0.015 && pi0lv.M()<=0.095) || (pi0lv.M()>=0.175 && pi0lv.M()<=0.255)))
+				{
+					e1_hist_w_alpha->Fill(pho1->E());
+					e2_hist_w_alpha->Fill(pho2->E());
+				}
+				*/
+
+				
+				// fill the tower by tower histograms with invariant mass
+				cemc_hist_eta_phi[_maxTowerEtas[jCs]][_maxTowerPhis[jCs]]->Fill(pairInvMass);
+				eta_hist[_maxTowerEtas[jCs]]->Fill(pairInvMass);
+				//pt1_ptpi0_alpha->Fill(pho1->Pt(), pi0lv.Pt(), alphaCut);
+				
+      }
+    }
+  }
+}
+
 
 
 // _______________________________________________________________..
@@ -608,11 +792,12 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add96(const char * incorrFile)
   TF1 *f1[25000]; 
   TF1 *f2[25000];
   TF1 *total[25000];
+	TF1 *fit_fn[25000];
   int kj = 0;
 	
 	// arrays to hold the fit results (cemc)
-	TF1 *cemc_eta_phi_result = 0;
 	fitp1_eta_phi2d = new TH2F("fitp1_eta_phi2d", "fit p1 eta phi", 96,0,96,256,0,256);
+
 	double cemc_par1_values[96][256] = {0.0};
 	//double cemc_par0_values[96][256] = {0.0};
 	//double cemc_par0_errors[96][256] = {0.0};
@@ -624,117 +809,121 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add96(const char * incorrFile)
   // create Ntuple object of the fit result from the data
   TNtuple * nt_corrVals = new TNtuple("nt_corrVals", "Ntuple of the corrections", "tower_eta:tower_phi:corr_val:agg_cv");
 
-		for (int ieta=0; ieta<96; ieta++)	// eta loop
+	for (int ieta=0; ieta<96; ieta++)	// eta loop
+	{
+		for (int iphi=0; iphi<256; iphi++)
 		{
-			for (int iphi=0; iphi<256; iphi++)
+
+			if (ieta>15 || iphi>15) continue;				
+
+			//for(int ithirds=0; ithirds<3; ithirds++)
+			//{
+			//	for (int ieta=0+ithirds*32; ieta<(ithirds*32+16); ieta++)
+			//	{
+			//		for (int iphi=0; iphi<16; iphi++)
+			//		{
+			//		}
+			//	}
+			//}
+			// find max bin around peak
+			float pkloc = 0.0;
+			float bsavloc = 0.0;
+			for (int kfi=1; kfi<20; kfi++)	// old kfi<25
 			{
-
-				if (ieta>15 || iphi>15) continue;				
-
-				//for(int ithirds=0; ithirds<3; ithirds++)
-				//{
-				//for (int ieta=0+ithirds*32; ieta<(ithirds*32+16); ieta++)
-				//{
-				//for (int iphi=0; iphi<16; iphi++)
-				//{
-				// find max bin around peak
-				float pkloc = 0.0;
-				float bsavloc = 0.0;
-				for (int kfi=1; kfi<25; kfi++)	// assuming pi0 peak within 25 bins and no other peak within
+				float locbv = cemc_hist_eta_phi[ieta][iphi]->GetBinContent(kfi);
+				if (locbv > bsavloc)
 				{
-					float locbv = cemc_hist_eta_phi[ieta][iphi]->GetBinContent(kfi);
-					if (locbv > bsavloc)
-					{
-						pkloc = cemc_hist_eta_phi[ieta][iphi]->GetBinCenter(kfi);
-						bsavloc = locbv;
-					}
+					pkloc = cemc_hist_eta_phi[ieta][iphi]->GetBinCenter(kfi);
+					bsavloc = locbv;
 				}
-				
-				f1[kj] = new TF1("f1", "gaus", pkloc-0.03, pkloc+0.03);
-				f2[kj] = new TF1("f2", "pol2", 0.01, 0.4);
-
-				cemc_hist_eta_phi[ieta][iphi]->Fit(f1[kj], "", "", pkloc-0.04, pkloc+0.04);
-				float fpkloc2 = f1[kj]->GetParameter(1);
-
-
-				TGraphErrors *grtemp = new TGraphErrors();
-				TString bkgNm;
-				bkgNm.Form("grBkgEta_phi_%d_%d", ieta, iphi);
-				
-				std::cout << " getting " << bkgNm.Data() << " mean was " << fpkloc2
-				<< " " << pkloc << std::endl;
-
-				grtemp->SetName(bkgNm.Data());
-				int ingr = 0;
-				for (int gj=1; gj<cemc_hist_eta_phi[ieta][iphi]->GetNbinsX()+1; gj++)
-				{
-					float binc = cemc_hist_eta_phi[ieta][iphi]->GetBinCenter(gj);
-					float cntc = cemc_hist_eta_phi[ieta][iphi]->GetBinContent(gj);
-					if ((binc>0.06*fpkloc2/0.145 && binc<0.09*fpkloc2/0.145) || (binc>0.22*fpkloc2/0.145 && binc<0.35*fpkloc2/0.145))
-					{
-						grtemp->SetPoint(ingr,binc,cntc);
-						grtemp->SetPointError(ingr++,0.001,sqrt(cntc));
-					}
-				}
-					
-				grtemp->Fit(f2[kj]);
-
-				total[kj] = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.3*fpkloc2/0.145);
-
-				double par[6];
-
-				f1[kj]->GetParameters(&par[0]);
-				f2[kj]->GetParameters(&par[3]);
-
-				total[kj]->SetParameters(par);
-				total[kj]->SetParLimits(2, 0.01, 0.027);
-				cemc_hist_eta_phi[ieta][iphi]->Fit(total[kj], "R");
-				cemc_eta_phi_result = cemc_hist_eta_phi[ieta][iphi]->GetFunction("total");
-				kj++;
-
-				grtemp->Write();
-
-				if (cemc_eta_phi_result)
-				{
-					//cemc_hist_eta_phi[ieta][iphi] = i;
-					cemc_par1_values[ieta][iphi] = cemc_eta_phi_result->GetParameter(1);
-
-					//	if (!(cemc_par1_values[ieta][iphi]>0.0))
-					//	{
-					//		cemc_par1_values[ieta][iphi] = 0.5;
-					//	}
-					//cemc_par0_values[ieta][iphi]	= cemc_eta_phi_result->GetParameter(0);
-					cemc_par1_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(1);
-					//cemc_par2_values[ieta][iphi]  = cemc_eta_phi_result->GetParameter(2);
-					//cemc_par2_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(2);
-				}
-				else
-				{
-					std::cout << "Warning::Fit Failed for eta bin : " << ieta << iphi << std::endl;
-				}
-
-				for (int ipatt_eta=0; ipatt_eta<6; ipatt_eta++)
-				{
-					for (int ipatt_phi=0; ipatt_phi<16; ipatt_phi++)
-					{
-						//if ((ipatt_eta>0) || (ipatt_phi>0))
-						//{
-						nt_corrVals->Fill(ieta+ipatt_eta*16,iphi+ipatt_phi*16,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
-						//}
-					}
-				}
-
-				//nt_corrVals->Fill(ieta,259,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][259]);
-				 
-				//cemc_p1_eta_phi->Fill(cemc_par1_values[ieta][iphi],ieta,iphi);
-				
-
-				//fitp0_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par0_values[ieta][iphi]);
-				fitp1_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par1_values[ieta][iphi]);
-				fitp1_eta_phi2d->SetBinError(ieta+1,iphi+1,cemc_par1_errors[ieta][iphi]);
-
 			}
+				
+			f1[kj] = new TF1("f1", "gaus", 0.06, 0.20);//"gaus",pkloc-0.03,pkloc+0.03
+			f2[kj] = new TF1("f2", "pol2", 0.01, 0.4);
+
+			cemc_hist_eta_phi[ieta][iphi]->Fit(f1[kj], "", "", pkloc-0.04, pkloc+0.04);
+			float fpkloc2 = f1[kj]->GetParameter(1);
+
+
+			TGraphErrors *grtemp = new TGraphErrors();
+			TString bkgNm;
+			bkgNm.Form("grBkgEta_phi_%d_%d", ieta, iphi);
+				
+			std::cout << " getting " << bkgNm.Data() << " mean was " << fpkloc2\
+			<< " " << pkloc << std::endl;
+
+			grtemp->SetName(bkgNm.Data());
+			int ingr = 0;
+			for (int gj=1; gj<cemc_hist_eta_phi[ieta][iphi]->GetNbinsX()+1; gj++)
+			{
+				float binc = cemc_hist_eta_phi[ieta][iphi]->GetBinCenter(gj);
+				float cntc = cemc_hist_eta_phi[ieta][iphi]->GetBinContent(gj);
+				if ((binc>0.06*fpkloc2/0.145 && binc<0.09*fpkloc2/0.145) || (binc>0.22*fpkloc2/0.145 && binc<0.35*fpkloc2/0.145))
+				{
+					grtemp->SetPoint(ingr,binc,cntc);
+					grtemp->SetPointError(ingr++,0.001,sqrt(cntc));
+				}
+			}
+					
+			grtemp->Fit(f2[kj]);
+
+			total[kj] = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.25);//0.3*fpkloc2/0.145
+
+			double par[6];
+
+			f1[kj]->GetParameters(&par[0]);
+			f2[kj]->GetParameters(&par[3]);
+
+			total[kj]->SetParameters(par);
+			total[kj]->SetParLimits(2, 0.01, 0.027);
+
+			cemc_hist_eta_phi[ieta][iphi]->Fit(total[kj], "R");
+			fit_fn[kj] = cemc_hist_eta_phi[ieta][iphi]->GetFunction("total");
+			
+			grtemp->Write();
+
+			if (fit_fn[kj])
+			{
+				//cemc_hist_eta_phi[ieta][iphi] = i;
+				cemc_par1_values[ieta][iphi] = fit_fn[kj]->GetParameter(1);
+
+				//	if (!(cemc_par1_values[ieta][iphi]>0.0))
+				//	{
+				//		cemc_par1_values[ieta][iphi] = 0.5;
+				//	}
+				//cemc_par0_values[ieta][iphi]	= cemc_eta_phi_result->GetParameter(0);
+				cemc_par1_errors[ieta][iphi] = fit_fn[kj]->GetParError(1);
+				//cemc_par2_values[ieta][iphi]  = cemc_eta_phi_result->GetParameter(2);
+				//cemc_par2_errors[ieta][iphi] = cemc_eta_phi_result->GetParError(2);
+			}
+			else
+			{
+				std::cout << "Warning::Fit Failed for eta bin : " << ieta << iphi << std::endl;
+			}
+
+			for (int ipatt_eta=0; ipatt_eta<6; ipatt_eta++)
+			{
+				for (int ipatt_phi=0; ipatt_phi<16; ipatt_phi++)
+				{
+					//if ((ipatt_eta>0) || (ipatt_phi>0))
+					//{
+					nt_corrVals->Fill(ieta+ipatt_eta*16,iphi+ipatt_phi*16,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][iphi]);
+					//}
+				}
+			}
+
+			//nt_corrVals->Fill(ieta,259,0.135/cemc_par1_values[ieta][iphi],0.135/cemc_par1_values[ieta][iphi]*myaggcorr[ieta][259]);
+				 
+			//cemc_p1_eta_phi->Fill(cemc_par1_values[ieta][iphi],ieta,iphi);
+				
+
+			//fitp0_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par0_values[ieta][iphi]);
+			fitp1_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par1_values[ieta][iphi]);
+			fitp1_eta_phi2d->SetBinError(ieta+1,iphi+1,cemc_par1_errors[ieta][iphi]);
+
+			kj++;
 		}
+	}
 
 	/*
 	TGraphErrors g1(96, eta_value, eta_par1_value, 0, eta_par1_error);
@@ -753,7 +942,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Eta_Phi_Add96(const char * incorrFile)
 
 	*/
 
-
+	fitp1_eta_phi2d->Write();
 	std::cout << " finished fit_histos_eta_phi. "  << std::endl;
 }
 
