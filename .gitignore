@@ -20,7 +20,6 @@
 .CaloCalibEmc_Pi0*
 
 b/
-macro/
 config*
 *.am
 *.in
