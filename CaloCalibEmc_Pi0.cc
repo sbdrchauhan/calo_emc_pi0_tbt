@@ -565,7 +565,7 @@ void CaloCalibEmc_Pi0::Loop(int nevts, TString _filename, TTree * intree, const 
 
 //__________oo00oo__________oo00oo_________________
 //This one is for etaslices
-void CaloCalibEmc_Pi0::Loop_new_cuts(int nevts, TString _filename, TTree * intree, const char * incorrFile)
+void CaloCalibEmc_Pi0::Loop_for_eta_slices(int nevts, TString _filename, TTree * intree, const char * incorrFile)
 {
 
   float myaggcorr[96][260];
@@ -687,7 +687,7 @@ void CaloCalibEmc_Pi0::Loop_new_cuts(int nevts, TString _filename, TTree * intre
     {
       pho1 = savClusLV[jCs];
       
-      if (fabs(pho1->Pt()) < 0.9)	continue;
+      if (fabs(pho1->Pt()) < 1.0)	continue;
 			
       // another loop to go into the saved cluster
       for (int kCs = 0; kCs < iCs; kCs++)
@@ -702,7 +702,7 @@ void CaloCalibEmc_Pi0::Loop_new_cuts(int nevts, TString _filename, TTree * intre
         if (pho1->DeltaR(*pho2) > 0.45) continue;
         pi0lv = *pho1 + *pho2;
 				float pairInvMass = pi0lv.M();
-				if (pi0lv.Pt()<0.9) continue;
+				if (pi0lv.Pt()<1.0) continue;
 
 				/*
 				if (_maxTowerEtas[jCs]==50 && ((pi0lv.M()>=0.015 && pi0lv.M()<=0.095) || (pi0lv.M()>=0.175 && pi0lv.M()<=0.255)))
@@ -725,6 +725,8 @@ void CaloCalibEmc_Pi0::Loop_new_cuts(int nevts, TString _filename, TTree * intre
 
 				
 				// fill the tower by tower histograms with invariant mass
+				// we don't need to fill tower-by-tower level when we do for eta slices
+				// although filling here just so we don't have to change codes in other places
 				cemc_hist_eta_phi[_maxTowerEtas[jCs]][_maxTowerPhis[jCs]]->Fill(pairInvMass);
 				eta_hist[_maxTowerEtas[jCs]]->Fill(pairInvMass);
 				//pt1_ptpi0_alpha->Fill(pho1->Pt(), pi0lv.Pt(), alphaCut);
@@ -1178,33 +1180,29 @@ void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
    
   cal_output->cd();
 
-  TF1 *f1[25000]; 
-  TF1 *f2[25000];
-  TF1 *total[25000];
+  TF1 *f1[96]; 
+  TF1 *f2[96];
+  TF1 *total[96];
+	TF1 *fit_fn[96];
   int kj = 0;
-  // arrays to hold parameter(1) and its error
-  
-  TF1 * eta_fit_result = 0;
+
+  // arrays to hold parameters and its error
   double eta_value[96];
-  double eta_par1_value[96];
-  double eta_par1_error[96];
-  double eta_par2_value[96];
-  double eta_par2_error[96];
+  double eta_par1_value[96] = {0.0};
+  double eta_par1_error[96] = {0.0};
+  double eta_par2_value[96] = {0.0};
+  double eta_par2_error[96] = {0.0};
 
-
-
-  // create Ntuple object to your data
+  // create Ntuple object from your calculated data
   TNtuple * nt_corrVals = new TNtuple("nt_corrVals", "Ntuple of the corrections", "tower_eta:tower_phi:corr_val:agg_cv");
  
   for (int i=0; i<96; i++)
   {
-		// Working fits 
-		// ------------------------------------------------------
 		//find max bin around peak
 		float pkloc =  0.0;  
-		float bsavloc = 0.;
+		float bsavloc = 0.0;
 
-		for (int kfi = 1; kfi < 25; kfi++)
+		for (int kfi = 1; kfi < 20; kfi++)
 		{
 			float locbv = eta_hist[i]->GetBinContent(kfi);
 			if (locbv > bsavloc)
@@ -1214,7 +1212,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
 			} 
 		}
 
-    f1[kj] = new TF1("f1", "gaus", pkloc-0.03, pkloc+0.03);
+    f1[kj] = new TF1("f1", "gaus", 0.06, 0.20 );//pkloc-0.03, pkloc+0.03);
     f2[kj] = new TF1("f2", "pol2", 0.01, 0.4);
 
     eta_hist[i]->Fit(f1[kj],"","",pkloc-0.04,pkloc+0.04);
@@ -1242,7 +1240,7 @@ void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
       
     grtemp->Fit(f2[kj]);
       
-    total[kj] = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.3*fpkloc2/0.145);
+    total[kj] = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.25);//0.3*fpkloc2/0.145);
 
     double par[6];
 
@@ -1253,21 +1251,19 @@ void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
     total[kj]->SetParameters(par);
     total[kj]->SetParLimits(2,0.01,0.027);
     eta_hist[i]->Fit(total[kj], "R");
-    eta_fit_result = eta_hist[i]->GetFunction("total");
-    kj++;
-    // -----------------------------------------------------
-      
+    fit_fn[kj] = eta_hist[i]->GetFunction("total");
+     
     grtemp->Write();
 
-    if (eta_fit_result)
+    if (fit_fn[kj])
 		{
 	  	eta_value[i] = i;
-	  	eta_par1_value[i]= eta_fit_result->GetParameter(1); 
+	  	eta_par1_value[i]= fit_fn[kj]->GetParameter(1); 
 	  	if (!(eta_par1_value[i] > 0))
 	      eta_par1_value[i] = 0.5;
-	  	eta_par1_error[i]= eta_fit_result->GetParError(1); 
-	  	eta_par2_value[i]= eta_fit_result->GetParameter(2); 
-	  	eta_par2_error[i]= eta_fit_result->GetParError(2); 
+	  	eta_par1_error[i]= fit_fn[kj]->GetParError(1); 
+	  	eta_par2_value[i]= fit_fn[kj]->GetParameter(2); 
+	  	eta_par2_error[i]= fit_fn[kj]->GetParError(2); 
 		}
     else
 		{
@@ -1279,23 +1275,25 @@ void CaloCalibEmc_Pi0::Fit_Histos_Etas96(const char * incorrFile)
 	  	nt_corrVals->Fill(i,jj,0.135/eta_par1_value[i],0.135/eta_par1_value[i]*myaggcorr[i][jj]);
 		}
 
-    nt_corrVals->Fill(i,259,0.135/eta_par1_value[i],0.135/eta_par1_value[i]*myaggcorr[i][259]);
+    //nt_corrVals->Fill(i,259,0.135/eta_par1_value[i],0.135/eta_par1_value[i]*myaggcorr[i][259]);
       
+		kj++;
   }
 
-  TGraphErrors g1(96, eta_value, eta_par1_value, 0, eta_par1_error);
-  g1.SetTitle("pi0 mean eta; eta; p1");
-  g1.SetMarkerStyle(20);
-  g1.SetMarkerColor(2);
-  g1.Draw("P");
-  g1.SetName("eta_p1");
-  g1.Write();
+  TGraphErrors *g1 = new TGraphErrors(96, eta_value, eta_par1_value, 0, eta_par1_error);
+  g1->SetTitle("pi0 mean eta; eta; p1");
+  g1->SetMarkerStyle(20);
+  g1->SetMarkerColor(2);
+  g1->SetName("eta_p1");
 	
-  TGraphErrors g2(96, eta_value, eta_par2_value, 0, eta_par2_error);
-  g2.SetTitle("pi0 sigma eta; eta; p2");
-  g2.Draw("AP");
-  g2.SetName("eta_p2");
-  g2.Write();
+  TGraphErrors *g2 = new TGraphErrors(96, eta_value, eta_par2_value, 0, eta_par2_error);
+  g2->SetTitle("pi0 sigma eta; eta; p2");
+  g2->SetName("eta_p2");
+
+	cal_output->WriteTObject(g1);
+	cal_output->WriteTObject(g2);
+
+	std::cout << " finished fit_histos_eta_slice" << std::endl;
 
 }
 
