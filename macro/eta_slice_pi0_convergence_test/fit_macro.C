@@ -36,7 +36,7 @@ void fit_macro(const char *inFile, int h)
 		} 
 	}
 
-   f1 = new TF1("f1", "gaus", 0.06,0.20);   //pkloc-0.03, pkloc+0.03);
+   f1 = new TF1("f1", "gaus", pkloc-0.03, pkloc+0.03 );//0.06,0.20);   //pkloc-0.03, pkloc+0.03);
    f2 = new TF1("f2", "pol2", 0.01, 0.4);
    eta_hist[h]->Fit(f1,"","", pkloc-0.04,pkloc+0.04);
    float fpkloc2 = f1->GetParameter(1);
@@ -60,6 +60,7 @@ void fit_macro(const char *inFile, int h)
      	grtemp->SetPointError(ingr++,0.001,sqrt(cntc));
     }
 	}  
+	auto c1 = new TCanvas();
   grtemp->Fit(f2);
       
   total = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.25);
@@ -71,6 +72,8 @@ void fit_macro(const char *inFile, int h)
 
   total->SetParameters(par);
   total->SetParLimits(2,0.01,0.027);
+
+	auto c2 = new TCanvas();
   eta_hist[h]->Fit(total, "R");
   fit_fn = eta_hist[h]->GetFunction("total");
 
