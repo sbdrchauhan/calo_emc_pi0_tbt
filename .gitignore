@@ -15,6 +15,7 @@
 *.lib
 *.exe
 *.out
+*.swp
 *.app
 
 .CaloCalibEmc_Pi0*
