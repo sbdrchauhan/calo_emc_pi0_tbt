@@ -13,7 +13,7 @@
 - [Results](#results)
 
 
-## Description
+## Description:
 
 [sPHENIX](https://www.sphenix.bnl.gov/) is an experiment, a collaboration in the RHIC collider located at Brookhaven National Laboratory facility in Long Island, New York. sPHENIX is primarily dedicated to studying a dense matter which is formed when two particle beams of heavy-ions collide at ultra-relativistic speeds. The dense matter created during a collision is called "Quark-Gluon Plasma". This state of matter is supposed to be formed during the early universe. In nutshell, to understand the interactions of the matter at the fundamental levels is the primary goal of sPHENIX.
 
@@ -23,16 +23,16 @@ Calibration of EMCal is done using several techniques and methods, one such meth
 
 To complete the calibration, we require about 6-7 iterations, and each iteration takes about 4 hours to complete. For complete documentation on how we do pi0 method calibration, please refer [here](https://www.overleaf.com/read/yxsdjvgjsbfp).
 
-## Analysis Codes
+## Analysis Codes:
 
-Codes are written in C++ and [ROOT](https://root.cern/) (usually, used by high-energy physics group) language. A class is created which contains the methods to perform analysis on the data.
+Codes are written in C++ and [ROOT](https://root.cern/) (usually, used by high-energy physics group) languages. A class is created which contains the methods to perform analysis on the data. Primarily, what it does is, it finds required nodes class available in the `Fun4All` framework; then gets the calorimeter nodes which has the clusters information in CEMC. Once we have the clusters information, then we can iterate on them to do our analysis i.e. make necessary cuts, make pairs, and calculate pi0 mass and then fill histograms for the later view, and further analyze the outcome results.
 
-Codes:
+### Main Codes:
 
 * [CaloCalibEmc_Pi0.cc](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/CaloCalibEmc_Pi0.cc) class implementaion
 * [CaloCalibEmc_Pi0.h](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/CaloCalibEmc_Pi0.h) class declaration
 
-## Macros
+## Macros:
 
 Macros are also a C++ program that runs above class using the methods of the same class to perform specific operations.
 
@@ -41,7 +41,7 @@ macros:
 * [Loop macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/runLCELoop.C)
 * [Saving correction values macro](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/macro/save_correc_value.C)
 
-## Presentations
+## Presentations:
 
 I presented my initial results in one of the collaboration internal meetings describing how my analysis codes are working as expected.
 
@@ -51,7 +51,7 @@ slides:
 * [September 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/UPDATED_optimal%20photon%20cuts_v2_UPDATED_AFTER_PRESENTATION.pdf)
 * [September 13, 2022](https://github.com/sbdrchauhan/calo_emc_pi0_tbt/blob/main/optimal%20cut%20update%203_shyam_chauhan_sphenix_caloCalibMtg.pdf)
 
-## Results
+## Results:
 
 <hr>
 <hr>
