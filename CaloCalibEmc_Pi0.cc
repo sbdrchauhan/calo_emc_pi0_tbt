@@ -70,7 +70,7 @@ int CaloCalibEmc_Pi0::InitRun(PHCompositeNode *topNode)
   pairInvMassTotal = new TH1F("pairInvMassTotal", "Pair Mass Histo", 70, 0.0, 0.7);
   mass_eta = new TH2F("mass_eta", "2d Pair Mass Histo", 70, 0.0, 0.7, 400, -1.5, 1.5);
   mass_eta_phi = new TH3F("mass_eta_phi", "3d Pair Mass Histo", 70, 0.0, 0.7, 150, -1.5, 1.5, 256, -3.142, 3.142);
-	pt1_ptpi0_alpha = new TH3F("pt1_ptpi0_alpha", "first photon pt, pi0 pt, alpha", 40, 0., 4., 40, 0., 4., 20., 0., 4.);
+	pt1_ptpi0_alpha = new TH3F("pt1_ptpi0_alpha", "first photon pt, pi0 pt, alpha", 40, 0., 4., 40, 0., 4., 10, 0., 1.);
 	
 	e1_hist_wo_alpha = new TH1F("e1_hist_wo_alpha", "E1 distribution w/o alpha cut", 400, 0., 4.);
 	e2_hist_wo_alpha = new TH1F("e2_hist_wo_alpha", "E2 distribution w/o alpha cut", 400, 0., 4.);

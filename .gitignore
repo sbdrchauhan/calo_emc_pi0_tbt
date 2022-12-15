@@ -28,5 +28,6 @@ install*
 missing
 aclocal*
 depcomp
+.root
 
 autom4te.cache/
