@@ -17,6 +17,7 @@
 *.out
 *.swp
 *.app
+.swp
 
 .CaloCalibEmc_Pi0*
 
