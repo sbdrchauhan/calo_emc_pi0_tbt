@@ -21,7 +21,7 @@
 
 .CaloCalibEmc_Pi0*
 
-b/
+build/
 config*
 *.am
 *.in

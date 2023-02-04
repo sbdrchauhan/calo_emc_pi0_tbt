@@ -13,7 +13,7 @@ R__LOAD_LIBRARY(libfun4all.so)
 R__LOAD_LIBRARY(libcalibCaloEmc_pi0.so)
 
 void Fun4All_G4_Pi0_Tbt(
-    const int nEvents = 1,
+    const int nEvents = 10,
     const string &inputClustersFileList = "/sphenix/data/data02/sphnxpro/MDC1/sHijing_HepMC/CaloCluster/data/DST_CALO_CLUSTER_sHijing_0_12fm-0000000001-00002.root",
     const string &outputFile = "test1")
 {

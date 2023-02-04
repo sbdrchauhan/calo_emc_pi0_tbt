@@ -92,12 +92,13 @@ void fit_macro(const char *inFile, int h)
 	double s = N2 - b;
 
 
+	/*
 	std::cout << "N1 low bin cont: " << eta_hist[h]->GetBinCenter(lowBin-numberBins+1) << std::endl;
 	std::cout << "N1 high bin cont: " << eta_hist[h]->GetBinCenter(lowBin) << std::endl;
 
 	std::cout << "N3 low bin cont: " << eta_hist[h]->GetBinCenter(highBin) << std::endl;
 	std::cout << "N3 low bin cont: " << eta_hist[h]->GetBinCenter(highBin+numberBins-1) << std::endl;
-	/*
+	*/
 
 	std::cout << "======================" << std::endl;
 	std::cout << "N1 counts: " << N1 << std::endl;
@@ -113,7 +114,7 @@ void fit_macro(const char *inFile, int h)
 	std::cout << "Signal: " << s << std::endl;
 	std::cout << "Background: " << b << std::endl;
 
-	*/
+	
 
 
 }

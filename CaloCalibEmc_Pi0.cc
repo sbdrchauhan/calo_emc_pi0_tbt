@@ -206,7 +206,7 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
   }
 
   _nClusters = iCs;
-  if (_nClusters > 60 && _nClusters < 1)
+  if (_nClusters > 350)
     return Fun4AllReturnCodes::EVENT_OK;
   	
 	// looping on the saved clusters savCs[]
@@ -269,11 +269,9 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
 		_clusterEtas[jCs] = tt_clus_eta;
 		_clusterPhis[jCs] = tt_clus_phi;
 
-
 		//if (tt_clus_energy > 1.3 ) // 1st photon's energy 
-		if (tt_clus_pt > 1.565 ) // 1st photon's energy 
+		if (tt_clus_pt > 1.0 ) // 1st photon's energy 
 		{
-
 			// another loop to go into the saved cluster
 			for(int kCs=0; kCs<iCs; kCs++)
 			{
@@ -285,11 +283,11 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
 				float tt2_clus_pt = E_vec_cluster2.perp();
 
 				//				if (tt2_clus_energy > 1.0)  // 2nd photon's energy
-				if (tt2_clus_pt > 1.08)  // 2nd photon's energy
+				if (tt2_clus_pt > 0.6)  // 2nd photon's energy
 				{
 					// lets do alpha cut here: this is needed tho
 					alphaCut = fabs(tt_clus_energy - tt2_clus_energy)/(tt_clus_energy + tt2_clus_energy);
-					if (alphaCut <= 0.4)
+					if (alphaCut <= 0.5)
 					{
 						float tt2_clus_eta = E_vec_cluster2.pseudoRapidity();
 						float tt2_clus_phi = E_vec_cluster2.getPhi();
@@ -299,32 +297,25 @@ int CaloCalibEmc_Pi0::process_event(PHCompositeNode *topNode)
 						pho1.SetPtEtaPhiE(tt_clus_pt, tt_clus_eta,tt_clus_phi,tt_clus_energy);
 						pho2.SetPtEtaPhiE(tt2_clus_pt, tt2_clus_eta,tt2_clus_phi,tt2_clus_energy);
 
-						//						std::cout << pho1.M() << " " << pho2.M() << std::endl;
-						
-						if (pho1.DeltaR(pho2) > 0.55) continue;
+						if (pho1.DeltaR(pho2) > 0.80) continue;
 
 						if (pho1.Eta()/pho2.Eta() < 0) continue;
 
 						pi0lv=pho1+pho2;
 						float pairInvMass=pi0lv.M();
 	
-						
-
-						if (tt_clus_energy > 1.3 && tt2_clus_energy > 1.0 && fabs(pi0lv.Pt()) > 1.8)
+						if (fabs(pi0lv.Pt()) > 1.0)
 						{   
 							pairInvMassTotal-> Fill(pairInvMass);
 							mass_eta->Fill(pairInvMass,tt_clus_eta);
 							mass_eta_phi->Fill(pairInvMass,tt_clus_eta, tt_clus_phi);
-						}
-
-
+						
 						// fill the tower by tower histograms with invariant mass
-						 cemc_hist_eta_phi[maxTowerEta][maxTowerPhi]->Fill(pairInvMass);
-						 eta_hist[maxTowerEta]->Fill(pairInvMass);
+					    cemc_hist_eta_phi[maxTowerEta][maxTowerPhi]->Fill(pairInvMass);
+						  eta_hist[maxTowerEta]->Fill(pairInvMass);
+						}
 					}
-
 				}
-		
 			}
 		}
 	}
@@ -661,7 +652,7 @@ void CaloCalibEmc_Pi0::Loop_for_eta_slices(int nevts, TString _filename, TTree *
  
     int nClusters = _nClusters;
 
-    if (nClusters > 60)	continue;
+    if (nClusters > 350)	continue;
 
     for (int j = 0; j < nClusters; j++)
     {
@@ -699,38 +690,21 @@ void CaloCalibEmc_Pi0::Loop_for_eta_slices(int nevts, TString _filename, TTree *
 				if (fabs(pho2->Pt()) < 0.6) continue; 
 					
 				TLorentzVector pi0lv;
-        if (pho1->DeltaR(*pho2) > 0.45) continue;
+        if (pho1->DeltaR(*pho2) > 0.80) continue;
+				if (pho1->Eta()/pho2->Eta() < 0) continue;
         pi0lv = *pho1 + *pho2;
 				float pairInvMass = pi0lv.M();
 				if (pi0lv.Pt()<1.0) continue;
-
-				/*
-				if (_maxTowerEtas[jCs]==50 && ((pi0lv.M()>=0.015 && pi0lv.M()<=0.095) || (pi0lv.M()>=0.175 && pi0lv.M()<=0.255)))
-				{
-					e1_hist_wo_alpha->Fill(pho1->E());
-					e2_hist_wo_alpha->Fill(pho2->E());
-				}
-				*/
 	
 				alphaCut = fabs((pho1->E() - pho2->E())/(pho1->E()+ pho2->E()));
 				if (alphaCut > 0.50) continue; // 0.50 to begin with
 
-				/*
-				if  (_maxTowerEtas[jCs]==50 && ((pi0lv.M()>=0.015 && pi0lv.M()<=0.095) || (pi0lv.M()>=0.175 && pi0lv.M()<=0.255)))
-				{
-					e1_hist_w_alpha->Fill(pho1->E());
-					e2_hist_w_alpha->Fill(pho2->E());
-				}
-				*/
-
-				
 				// fill the tower by tower histograms with invariant mass
 				// we don't need to fill tower-by-tower level when we do for eta slices
 				// although filling here just so we don't have to change codes in other places
 				cemc_hist_eta_phi[_maxTowerEtas[jCs]][_maxTowerPhis[jCs]]->Fill(pairInvMass);
 				eta_hist[_maxTowerEtas[jCs]]->Fill(pairInvMass);
 				//pt1_ptpi0_alpha->Fill(pho1->Pt(), pi0lv.Pt(), alphaCut);
-				
       }
     }
   }
