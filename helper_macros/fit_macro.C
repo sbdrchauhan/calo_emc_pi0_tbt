@@ -1,4 +1,4 @@
-void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_comb.root")
+void fit_macro(const char *inFile="run1_LCE_comb_smooth1.root")
 {	
 	gStyle->SetOptFit(1111);
 
@@ -14,10 +14,11 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 		}
 	}
 
-	// file came from runLCE loop macro	
-	// that conatins histograms
+	// that contains histograms
 	TFile *file = new TFile(inFile);
 
+	float x_axis[24576];
+	int x_count = 0;
 	// getting histograms from the input file
 	for (int i=0; i<96; i++)
 	{
@@ -28,6 +29,8 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 		eta_hist[i] = h_temp;
 		for (int j=0; j<256; j++)
 		{
+			x_axis[x_count] = x_count;
+			x_count ++;
 			TString i1;
 	  	TString j1;
 	  	i1.Form("%d",i);
@@ -38,40 +41,30 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 		}
 	}
 
-	TFile *outfile = new TFile("out_fit_macro.root", "RECREATE");
+	// saving fit files into this:
+	TFile *outfile = new TFile("out_fit_macro1.root", "RECREATE");
 	outfile->cd();
 
 	TH2F *fitp1_eta_phi2d = new TH2F("fitp1_eta_phi2d", "peak mean eta-phi", 96,0,96,256,0,256);
+	float chi2 = -9999.99;
+	float ndf = -9999.99;
+	double par[6];
 
-	TF1 *f1_eta[25000];
-	TF1 *f1_etaphi[25000];
-
-  TF1 *f2_eta[25000];
-	TF1 *f2_etaphi[25000];
-
-  TF1 *total_eta[25000];
-	TF1 *total_etaphi[25000];
-
-	TF1 *fit_fn_eta[25000];
-	TF1 *fit_fn_etaphi[25000];
-
-  int kj = 0;
+	TF1 *fit_gaus;
+	TF1 *fit_bkg;
+	TF1 *fit_total;
+	TF1 *fit_result;
 	
-	// First prepare for eta_hists
-	double eta_value[96];
-  double eta_par1_value[96] = {0.0};
-  double eta_par1_error[96] = {0.0};
-  double eta_par2_value[96] = {0.0};
-  double eta_par2_error[96] = {0.0};
 
-	double cemc_par1_values[96][256] = {{0.0}}; //mising braces Werror w/o double braces
+	double cemc_par1_values[96][256] = {{0.0}};
 	double cemc_par1_errors[96][256] = {{0.0}};
+	float cemc_etaphi_fitmean[24576];
+	int it_etaphi=0;
 
-	for (int ieta=0; ieta<96; ieta++)	// eta loop
+	// outer etabin loop
+	for (int ieta=0; ieta<96; ieta++)
 	{
-		std::cout << "" << std::endl;
-		std::cout << "outer loop of 96 eta_slice # " << ieta << std::endl;
-		std::cout << "" << std::endl;
+		std::cout << "started etabin: " << ieta << std::endl;
 		//find max bin around peak
 		float pkloc_in =  0.0;  
 		float bsavloc_in = 0.0;
@@ -86,11 +79,10 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 			} 
 		}
 
-    f1_eta[kj] = new TF1("f1", "gaus");//, 0.06, 0.20 );//pkloc-0.03, pkloc+0.03);
-    f2_eta[kj] = new TF1("f2", "pol2");//, 0.01, 0.4);
-
-    eta_hist[ieta]->Fit(f1_eta[kj],"Q","",pkloc_in-0.04,pkloc_in+0.04);
-    float fpkloc2_in = f1_eta[kj]->GetParameter(1);
+    fit_gaus = new TF1("fit_gaus", "gaus");//, 0.06, 0.20 );//pkloc-0.03, pkloc+0.03);
+    fit_bkg = new TF1("fit_bkg", "pol2");//, 0.01, 0.4);
+    eta_hist[ieta]->Fit(fit_gaus,"Q","",pkloc_in-0.04,pkloc_in+0.04);
+    float fpkloc2_in = fit_gaus->GetParameter(1);
 
     TGraphErrors * grtemp_in = new TGraphErrors();
     TString bkgNm_in;
@@ -112,40 +104,26 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 	    }
 		}
       
-    grtemp_in->Fit(f2_eta[kj], "Q");
-      
-    total_eta[kj] = new TF1("total", "gaus(0)+pol2(3)", 0.06, 0.3);//0.3*fpkloc2/0.145);
+    grtemp_in->Fit(fit_bkg, "Q");
+
+    fit_total = new TF1("fit_total", "gaus(0)+pol2(3)", 0.06, 0.30);//0.3*fpkloc2/0.145);
 
     double par_in[6];
 
-    f1_eta[kj]->GetParameters(&par_in[0]);
-    f2_eta[kj]->GetParameters(&par_in[3]);
+    fit_gaus->GetParameters(&par_in[0]);
+    fit_bkg->GetParameters(&par_in[3]);
 
-    total_eta[kj]->SetParameters(par_in);
-    total_eta[kj]->SetParLimits(2,0.01,0.027);
-    eta_hist[ieta]->Fit(total_eta[kj], "RQ");
+    fit_total->SetParameters(par_in);
+    fit_total->SetParLimits(2,0.01,0.027);
+    eta_hist[ieta]->Fit(fit_total, "RQ");
 		eta_hist[ieta]->Write();
-    fit_fn_eta[kj] = eta_hist[ieta]->GetFunction("total");
-     
-    if (fit_fn_eta[kj])
-		{
-	  	eta_value[ieta] = ieta;
-	  	eta_par1_value[ieta]= fit_fn_eta[kj]->GetParameter(1); 
-	  	if (!(eta_par1_value[ieta] > 0))
-	      eta_par1_value[ieta] = 0.5;
-	  	eta_par1_error[ieta]= fit_fn_eta[kj]->GetParError(1); 
-	  	eta_par2_value[ieta]= fit_fn_eta[kj]->GetParameter(2); 
-	  	eta_par2_error[ieta]= fit_fn_eta[kj]->GetParError(2); 
-		}
-    else
-		{
-	  	std::cout <<  "WarninG :: Fit Failed for eta bin : " << ieta << std::endl;
-		}	
-		
+  		
 		// start of the inner for Loop to work for eta-phi towers
 		// -----------------------------------------------------------------..
 		for (int iphi=0; iphi<256; iphi++)
 		{
+			//if (!cemc_hist_eta_phi[ieta][iphi]->GetBinContent(10))continue;
+
 			// find max bin around peak	
 			float pkloc = 0.0;
 			float bsavloc = 0.0;
@@ -159,12 +137,9 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 				}
 			}
 				
-			f1_etaphi[kj] = new TF1("f1", "gaus");// 0.145+0.03);//"gaus",pkloc-0.03,pkloc+0.03
-			f2_etaphi[kj] = new TF1("f2", "pol2");//, 0.01, 0.4);
-
-			cemc_hist_eta_phi[ieta][iphi]->Fit(f1_etaphi[kj], "Q", "",\
+			cemc_hist_eta_phi[ieta][iphi]->Fit(fit_gaus, "Q", "",\
 							 pkloc-0.03*pkloc/0.145, pkloc+0.03*pkloc/0.145);//, pkloc-0.03, pkloc+0.03);
-			float fpkloc2 = f1_etaphi[kj]->GetParameter(1);
+			float fpkloc2 = fit_gaus->GetParameter(1);
 			
 			TGraphErrors *grtemp = new TGraphErrors();
 			TString bkgNm;
@@ -187,63 +162,70 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 				}
 			}
 					
-			grtemp->Fit(f2_etaphi[kj],"Q");
-
-			total_etaphi[kj] = new TF1("total", "gaus(0)+pol2(3)",0.07, 0.30);//0.3*fpkloc2/0.145
-
-			double par[6];
-
+			grtemp->Fit(fit_bkg,"Q");
+			
+			double parr[6];
+			parr[0] = par_in[0];
+			parr[1] = par_in[1];
+			parr[2] = par_in[2];
+			parr[3] = fit_bkg->GetParameter(0);
+			parr[4] = fit_bkg->GetParameter(1);
+			parr[5] = fit_bkg->GetParameter(2);
+			
+			fit_total->SetParameters(parr);
+			//fit_total->SetParLimits(1, 0.1215, 0.1485);
+ 
+			fit_total->SetParLimits(1,0.11,0.19);
+			
 			// gaus parameters use from corresponding eta_slice
-			par[0] = par_in[0];
-			par[1] = par_in[1];
-			par[2] = par_in[2];
-			double f2_0 = f2_etaphi[kj]->GetParameter(0);
-			double f2_1 = f2_etaphi[kj]->GetParameter(1);
-			double f2_2 = f2_etaphi[kj]->GetParameter(2);
+			fit_total->FixParameter(1,0.135);
+			cemc_hist_eta_phi[ieta][iphi]->Fit(fit_total, "Q");
+			fit_total->SetParLimits(1,0.11,0.19);
+			cemc_hist_eta_phi[ieta][iphi]->Fit(fit_total,"RQ");
+			//cemc_hist_eta_phi[ieta][iphi]->Write();
+			fit_result = cemc_hist_eta_phi[ieta][iphi]->GetFunction("fit_total");
+			chi2 = fit_result->GetChisquare();
+			ndf = fit_result->GetNDF();
+			int fit_count = 0;
+			int p1_change = 0;
+			while (chi2/ndf > 3.0 && fit_count < 7)
+			{
+				if (p1_change==0)fit_total->FixParameter(1,0.17);
+				if (p1_change==1)fit_total->FixParameter(1,0.16);
+				if (p1_change==2)fit_total->FixParameter(1,0.15);
+				if (p1_change==3)fit_total->FixParameter(1,0.14);
+				if (p1_change==4)fit_total->FixParameter(1,0.13);
+				
+				cemc_hist_eta_phi[ieta][iphi]->Fit(fit_total, "Q");
+				fit_total->SetParLimits(1,0.11,0.19);
+				cemc_hist_eta_phi[ieta][iphi]->Fit(fit_total,"RQ");
+				fit_result = cemc_hist_eta_phi[ieta][iphi]->GetFunction("fit_total");
+				chi2 = fit_result->GetChisquare();
+				ndf = fit_result->GetNDF();
+				
+				p1_change++;
+				fit_count++;
+			}
 
-			par[3] = f2_0;
-			par[4] = f2_1;
-			par[5] = f2_2;
-
-			total_etaphi[kj]->SetParameters(par); //_in);
-			total_etaphi[kj]->SetParLimits(2, 0.01, 0.027);
-			
-			//total_etaphi[kj]->FixParameter(3,f2_0);
-			//total_etaphi[kj]->FixParameter(4,f2_1);
-			//total_etaphi[kj]->FixParameter(5,f2_2);
-
-			cemc_hist_eta_phi[ieta][iphi]->Fit(total_etaphi[kj], "RQ");
 			cemc_hist_eta_phi[ieta][iphi]->Write();
-			fit_fn_etaphi[kj] = cemc_hist_eta_phi[ieta][iphi]->GetFunction("total");
-			
-			if (fit_fn_etaphi[kj])
-			{
-				cemc_par1_values[ieta][iphi] = fit_fn_etaphi[kj]->GetParameter(1);
-				/*if (fit_fn_etaphi[kj]->GetParameter(1) <= 0.054)
-				{
-					// what new changes to do refit?
-				}*/
-				cemc_par1_errors[ieta][iphi] = fit_fn_etaphi[kj]->GetParError(1);
-			}
-			else
-			{
-				std::cout << "Warning::Fit Failed for eta bin : " << ieta << iphi << std::endl;
-				cemc_par1_values[ieta][iphi] = -999.0;
-				cemc_par1_errors[ieta][iphi] = -999.0;
-			}
-
+			cemc_par1_values[ieta][iphi] = fit_result->GetParameter(1);
+			cemc_par1_errors[ieta][iphi] = fit_result->GetParError(1);
 			fitp1_eta_phi2d->SetBinContent(ieta+1,iphi+1,cemc_par1_values[ieta][iphi]);
 			fitp1_eta_phi2d->SetBinError(ieta+1,iphi+1,cemc_par1_errors[ieta][iphi]);
-
-			kj++;
+			cemc_etaphi_fitmean[it_etaphi] = cemc_par1_values[ieta][iphi];
+			it_etaphi++;
 		}
 	}
-	//fitp1_eta_phi2d->SetMinimum(0.11);
-	//fitp1_eta_phi2d->SetMaximum(0.18);
-	fitp1_eta_phi2d->Write();
+
+	fitp1_eta_phi2d->Write();	
 	
+	TGraphErrors *gr = new TGraphErrors(24576,x_axis,cemc_etaphi_fitmean,0,0);
+	gr->SetName("etaphi_fit_mean");
+	gr->Write();
+
+
 	// saving eta slices into jpg
-	/*
+	
 	TCanvas *c_eta = new TCanvas("c_eta");
 	c_eta->Divide(8,12);
 	//c_eta->Divide(4,4);
@@ -317,7 +299,10 @@ void fit_macro(int eta_h=0, int eta=0, int phi=0, const char *inFile="run1_LCE_c
 				flag = true;
 			}
 		}
-	}
+	}//--------------*/
+
+
+
 }
 
 
